@@ -64,6 +64,21 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
     private final ArcPoint targetPoint;
 
     private final PropertyChangeListener intermediateListener = new ArcPointChangeListener();
+    
+    private PropertyChangeListener sourceTargetListener = new PropertyChangeListener(){
+		
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+        	String name = evt.getPropertyName();
+        	
+            if (name.equals(Connectable.X_CHANGE_MESSAGE) || name.equals(Connectable.Y_CHANGE_MESSAGE) || name.equals(Transition.ANGLE_CHANGE_MESSAGE)) {
+                sourcePoint.setPoint(getStartPoint());
+                targetPoint.setPoint(getEndPoint());
+            } else if(name.equals(PetriNetComponent.ID_CHANGE_MESSAGE)) {
+            	setId(source.getId() + " TO " + target.getId());
+            }
+        }
+    };
 
 
     /**
@@ -88,31 +103,24 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
         arcPoints.add(sourcePoint);
         arcPoints.add(targetPoint);
 
-        source.addPropertyChangeListener(new PropertyChangeListener(){
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String name = evt.getPropertyName();
-                if (name.equals(Connectable.X_CHANGE_MESSAGE) || name.equals(Connectable.Y_CHANGE_MESSAGE) || name.equals(Transition.ANGLE_CHANGE_MESSAGE)) {
-
-                    sourcePoint.setPoint(getStartPoint());
-                    targetPoint.setPoint(getEndPoint());
-                }
-            }
-        });
-        target.addPropertyChangeListener(new PropertyChangeListener(){
-
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                String name = evt.getPropertyName();
-                if (name.equals(Connectable.X_CHANGE_MESSAGE) || name.equals(Connectable.Y_CHANGE_MESSAGE) || name.equals(Transition.ANGLE_CHANGE_MESSAGE)) {
-                    sourcePoint.setPoint(getStartPoint());
-                    targetPoint.setPoint(getEndPoint());
-                }
-            }
-        });
-
-
+        addSourceListener();
+        addTargetListener();
+    }
+    
+    private void addSourceListener() {
+    	source.addPropertyChangeListener(sourceTargetListener);
+    }
+    
+    private void addTargetListener() {
+    	target.addPropertyChangeListener(sourceTargetListener);
+    }
+    
+    private void removeSourceListener() {
+    	source.removePropertyChangeListener(sourceTargetListener);
+    }
+    
+    private void removeTargetListener() {
+    	target.removePropertyChangeListener(sourceTargetListener);
     }
 
     /**
@@ -142,6 +150,8 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
     public void setSource(S source) {
         S old = this.source;
         this.source = source;
+        
+        addSourceListener();
         changeSupport.firePropertyChange(SOURCE_CHANGE_MESSAGE, old, source);
     }
 
@@ -162,6 +172,8 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
     public void setTarget(T target) {
         T old = this.target;
         this.target = target;
+        
+        addTargetListener();
         changeSupport.firePropertyChange(TARGET_CHANGE_MESSAGE, old, target);
     }
 
@@ -367,13 +379,7 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
      */
     @Override
     public final Point2D.Double getStartPoint() {
-        double angle;
-        if (arcPoints.size() > 1) {
-            angle = getAngleBetweenTwoPoints(arcPoints.get(1).getPoint(), source.getCentre());
-        } else {
-            angle = getAngleBetweenTwoPoints(target.getCentre(), source.getCentre());
-        }
-        return source.getArcEdgePoint(angle);
+   		return source.getArcEdgePoint(getStartAngle());
     }
 
     /**
@@ -381,21 +387,33 @@ public abstract class AbstractArc<S extends Connectable, T extends Connectable> 
      */
     @Override
     public final Point2D getEndPoint() {
-        return target.getArcEdgePoint(getEndAngle());
+   		return target.getArcEdgePoint(getEndAngle());
     }
 
     /**
-     *
-     * @return the angle at which this arc connects to the target
-     */
-    @Override
-    public double getEndAngle() {
-        if (arcPoints.size() > 1) {
-            return getAngleBetweenTwoPoints(arcPoints.get(arcPoints.size() - 2).getPoint(), target.getCentre());
-        } else {
-            return getAngleBetweenTwoPoints(source.getCentre(), target.getCentre());
-        }
-    }
+    *
+    * @return the angle at which this arc connects to the target
+    */
+   @Override
+   public double getEndAngle() {
+       if (arcPoints.size() > 1) {
+           return getAngleBetweenTwoPoints(arcPoints.get(arcPoints.size() - 2).getPoint(), target.getCentre());
+       } else {
+           return getAngleBetweenTwoPoints(source.getCentre(), target.getCentre());
+       }
+   }
+   
+   /**
+   *
+   * @return the angle at which this arc connects to the target
+   */
+  public double getStartAngle() {
+      if (arcPoints.size() > 1) {
+          return getAngleBetweenTwoPoints(arcPoints.get(1).getPoint(), source.getCentre());
+      } else {
+          return getAngleBetweenTwoPoints(target.getCentre(), source.getCentre());
+      }
+  }
 
     /**
      * @return angle in radians between first and second

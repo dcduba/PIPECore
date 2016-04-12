@@ -607,7 +607,7 @@ public class PetriNetTest {
                         ANormalArc.withSource("T0").andTarget("P0").with("1", "Default").token());
         Transition t0 = petriNet.getComponent("T0", Transition.class);
         t0.setId("T2");
-        OutboundArc arc = petriNet.getComponent("T0 TO P0", OutboundArc.class);
+        OutboundArc arc = petriNet.getComponent("T2 TO P0", OutboundArc.class);
         Collection<OutboundArc> outboundArcs = petriNet.outboundArcs(t0);
         assertEquals(1, outboundArcs.size());
         assertTrue(outboundArcs.contains(arc));
