@@ -361,6 +361,9 @@ public class PetriNet {
         for (InboundArc arc : outboundArcs(place)) {
             removeArc(arc);
         }
+        for (OutboundArc arc : inboundArcs(place)) {
+        	removeArc(arc);
+        }
         changeSupport.firePropertyChange(DELETE_PLACE_CHANGE_MESSAGE, place, null);
     }
 
@@ -426,6 +429,20 @@ public class PetriNet {
         }
         return outbound;
     }
+    
+    /**
+     * @param place
+     * @return arcs that are inbound to this place
+     */
+    public Collection<OutboundArc> inboundArcs(Place place) {
+        Collection<OutboundArc> inbound = new LinkedList<>();
+        for (OutboundArc arc : outboundArcs.values()) {
+            if (arc.getTarget().equals(place)) {
+                inbound.add(arc);
+            }
+        }
+        return inbound;
+    }
 
     /**
      * Removes the specified arc from the Petri net
@@ -435,9 +452,10 @@ public class PetriNet {
     public void removeArc(InboundArc arc) {
         inboundArcs.remove(arc.getId());
         transitionInboundArcs.remove(arc.getTarget().getId(), arc);
+        
         changeSupport.firePropertyChange(DELETE_ARC_CHANGE_MESSAGE, arc, null);
     }
-
+    
     /**
      * Adds transition to the Petri net
      *
@@ -463,20 +481,12 @@ public class PetriNet {
         for (OutboundArc arc : outboundArcs(transition)) {
             removeArc(arc);
         }
+        for (InboundArc arc : inboundArcs(transition)) {
+        	removeArc(arc);
+        }
         transitionOutboundArcs.removeAll(transition.getId());
         transitionInboundArcs.removeAll(transition.getId());
         changeSupport.firePropertyChange(DELETE_TRANSITION_CHANGE_MESSAGE, transition, null);
-    }
-
-    /**
-     * An outbound arc of a transition is any arc that starts at the transition
-     * and connects elsewhere
-     *
-     * @param transition to find outbound arcs for
-     * @return arcs that are outbound from transition
-     */
-    public Collection<OutboundArc> outboundArcs(Transition transition) {
-        return transitionOutboundArcs.get(transition.getId());
     }
 
     /**
@@ -487,6 +497,7 @@ public class PetriNet {
     public void removeArc(OutboundArc arc) {
         outboundArcs.remove(arc.getId());
         transitionOutboundArcs.remove(arc.getSource().getId(), arc);
+        
         changeSupport.firePropertyChange(DELETE_ARC_CHANGE_MESSAGE, arc, null);
     }
 
@@ -804,7 +815,15 @@ public class PetriNet {
      * @return arcs that are inbound to transition, that is arcs that come into the transition
      */
     public Collection<InboundArc> inboundArcs(Transition transition) {
-        return transitionInboundArcs.get(transition.getId());
+        return new LinkedList<InboundArc>(transitionInboundArcs.get(transition.getId()));
+    }
+    
+    /**
+     * @param transition to calculate outbound arcs for
+     * @return arcs that are outbound from transition, that is arcs that originate in transition
+     */
+    public Collection<OutboundArc> outboundArcs(Transition transition) {
+        return new LinkedList<OutboundArc>(transitionOutboundArcs.get(transition.getId()));
     }
 
     /**
