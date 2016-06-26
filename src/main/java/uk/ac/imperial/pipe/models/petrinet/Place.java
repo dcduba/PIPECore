@@ -12,6 +12,11 @@ public interface Place extends Connectable {
      * Message fired when the places tokens change in any way
      */
     String TOKEN_CHANGE_MESSAGE = "tokens";
+    
+    /**
+     * Message fired when the capacity changes in any way
+     */
+    String CAPACITY_CHANGE_MESSAGE = "capacity";
 
     double getMarkingXOffset();
 

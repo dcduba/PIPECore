@@ -46,6 +46,8 @@ public interface PetriNetManager {
      * @param file location of Petri net xml file
      */
     void createFromFile(File file) throws JAXBException, UnparsableException, FileNotFoundException;
+    
+    void createFromPetrinet(PetriNet petriNet);
 
     /**
      *

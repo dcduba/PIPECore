@@ -61,6 +61,8 @@ public final class PetriNetAnimator implements Animator {
             Map<String, Integer> originalTokens = savedStateTokens.get(place.getId());
             place.setTokenCounts(originalTokens);
         }
+        
+        animationLogic.clear();
     }
 
     /**

@@ -66,7 +66,33 @@ public class PetriNetAnimationLogicTest {
         AnimationLogic animator = new PetriNetAnimationLogic(petriNet);
         Collection<Transition> transitions = animator.getEnabledTransitions(AnimationUtils.getState(petriNet));
         assertEquals("Both transitions were not enabled", 2, transitions.size());
+        
         assertThat(transitions).contains(t0, t1);
+    }
+    
+    @Test
+    public void transitionCanFireWhenInputOrOutputSetIsEmpty() throws PetriNetComponentException {
+    	PetriNet petriNet = APetriNet.with(AToken.called("Default").withColor(Color.BLACK)).and(
+    			APlace.withId("P0").containing(1, "Default").token()).and(
+    			APlace.withId("P1").containing(0, "Default").token()).and(
+    			AnImmediateTransition.withId("T0")).and(
+    			AnImmediateTransition.withId("T1")).and(
+    			AnImmediateTransition.withId("T2")).and(
+    			ANormalArc.withSource("T1").andTarget("P1").with("1", "Default")
+    	).andFinally(ANormalArc.withSource("P0").andTarget("T0").with("1", "Default"));
+    	
+        AnimationLogic animator = new PetriNetAnimationLogic(petriNet);
+        Collection<Transition> transitions = animator.getEnabledTransitions(AnimationUtils.getState(petriNet));
+        Transition t0 = petriNet.getComponent("T0", Transition.class);
+    	assertTrue("A transition with enough input tokens and without an output place should be enabled", transitions.contains(t0));
+    	
+        Transition t1 = petriNet.getComponent("T1", Transition.class);
+    	assertTrue("A transition without input places should always be enabled", transitions.contains(t1));
+    	
+    	Transition t2 = petriNet.getComponent("T2", Transition.class);
+    	assertTrue("A transition without input or output places should always be enabled", transitions.contains(t2));
+    	
+    	assertEquals("Number of enabled transitions should match", 3, transitions.size());
     }
 
 
@@ -90,17 +116,52 @@ public class PetriNetAnimationLogicTest {
         assertThat(transitions).contains(t0, t1);
     }
     @Test
-    public void arcweightThatEvaluatesToZeroDoesNotEnableTransition() throws PetriNetComponentException {
-    	PetriNet petriNet = APetriNet.with(AToken.called("Default").withColor(Color.BLACK)).and(
-    			APlace.withId("P0").and(0, "Default").tokens()).and(
-    			AnImmediateTransition.withId("T0")).andFinally(
-    			ANormalArc.withSource("P0").andTarget("T0").with("#(P0)", "Default").token());
+    public void enabledTransitionRequiresAtLeastOneTokenToBeMoved() throws PetriNetComponentException {
+    	//Since neither default or red tokens are removed from the place, the transition should not be enabled
+    	PetriNet petriNet = APetriNet
+    			.with(AToken.called("Default").withColor(Color.BLACK))
+    			.and(AToken.called("Red").withColor(Color.RED))
+    			.and(APlace.withId("P0").and(0, "Default").and(0, "Red").tokens())
+    			.and(AnImmediateTransition.withId("T0"))
+    			.andFinally(ANormalArc.withSource("P0").andTarget("T0").with("#(P0)", "Default").and("0", "Red").tokens());
         State state = AnimationUtils.getState(petriNet);
         InboundArc arc = petriNet.getComponent("P0 TO T0", InboundArc.class);
         assertFalse(arc.canFire(petriNet, state)); 
         AnimationLogic animator = new PetriNetAnimationLogic(petriNet);
         Collection<Transition> transitions = animator.getEnabledTransitions(state);
         assertEquals(0, transitions.size());
+    }
+    
+    @Test
+    public void multiColorArcsCanFireIfNotNotRequiredTokensAreZero() throws PetriNetComponentException {
+    	//Guards against scenarios where transition should be enabled, but is not because of
+    	//0 tokens of the other type, even though they are not required.
+    	PetriNet petriNet = APetriNet
+    			.with(AToken.called("Red").withColor(Color.RED))
+    			.and(AToken.called("Default").withColor(Color.BLACK))
+    			.and(APlace.withId("P0").and(0, "Default").and(1, "Red").tokens())
+    			.and(AnImmediateTransition.withId("T0"))
+    			.andFinally(ANormalArc.withSource("P0").andTarget("T0").with("1", "Red").token());
+    	State state = AnimationUtils.getState(petriNet);
+    	InboundArc arc = petriNet.getComponent("P0 TO T0", InboundArc.class);
+    	assertTrue(arc.canFire(petriNet, state));
+    	AnimationLogic animator = new PetriNetAnimationLogic(petriNet);
+    	Collection<Transition> transitions = animator.getEnabledTransitions(state);
+    	assertEquals(1, transitions.size());
+    	
+    	//Complement
+    	PetriNet petriNet2 = APetriNet
+    			.with(AToken.called("Red").withColor(Color.RED))
+    			.and(AToken.called("Default").withColor(Color.BLACK))
+    			.and(APlace.withId("P0").and(1, "Default").and(0, "Red").tokens())
+    			.and(AnImmediateTransition.withId("T0"))
+    			.andFinally(ANormalArc.withSource("P0").andTarget("T0").with("1", "Default").token());
+    	State state2 = AnimationUtils.getState(petriNet2);
+    	InboundArc arc2 = petriNet2.getComponent("P0 TO T0", InboundArc.class);
+    	assertTrue(arc2.canFire(petriNet2, state2));
+    	AnimationLogic animator2 = new PetriNetAnimationLogic(petriNet2);
+    	Collection<Transition> transitions2 = animator2.getEnabledTransitions(state2);
+    	assertEquals(1, transitions2.size());
     }
 
     @Test

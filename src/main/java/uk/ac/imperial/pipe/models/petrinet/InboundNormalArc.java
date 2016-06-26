@@ -34,6 +34,7 @@ public class InboundNormalArc extends InboundArc {
         Map<String, String> tokenWeights = getTokenWeights();
         StateEvalVisitor stateEvalVisitor = new StateEvalVisitor(petriNet, state);
         FunctionalWeightParser<Double> functionalWeightParser = new PetriNetWeightParser(stateEvalVisitor, petriNet);
+        int sumOfTokenWeights = 0;
 
 
         for (Map.Entry<String, String> entry : tokenWeights.entrySet()) {
@@ -47,11 +48,15 @@ public class InboundNormalArc extends InboundArc {
 
             String tokenId = entry.getKey();
             int currentCount = tokenCounts.get(tokenId);
-            //TODO test:  currentCount = -1 can't mean that the arc can fire
-//            if ((currentCount < tokenWeight) && (currentCount != -1)) {
-            if ((currentCount < tokenWeight) || (currentCount == 0)) {
+
+            sumOfTokenWeights += tokenWeight;
+            if (currentCount < tokenWeight) {
                 return false;
             }
+        }
+        //An arc must at least remove 1 token from somewhere.
+        if(sumOfTokenWeights == 0) {
+        	return false;
         }
         return true;
     }

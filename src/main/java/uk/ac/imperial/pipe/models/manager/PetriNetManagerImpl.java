@@ -97,6 +97,11 @@ public final class PetriNetManagerImpl implements PetriNetManager {
         namePetriNetFromFile(petriNet, file);
         changeSupport.firePropertyChange(NEW_PETRI_NET_MESSAGE, null, petriNet);
     }
+    
+    @Override
+    public void createFromPetrinet(PetriNet petriNet) {
+    	changeSupport.firePropertyChange(NEW_PETRI_NET_MESSAGE,  null,  petriNet);
+    }
 
     /**
      * Save the petri net to the output file
