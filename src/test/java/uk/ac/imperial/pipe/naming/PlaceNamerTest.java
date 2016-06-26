@@ -21,32 +21,32 @@ public class PlaceNamerTest {
     }
 
     @Test
-    public void firstPlaceIsZero() {
+    public void firstPlaceIsOne() {
         String actual = placeNamer.getName();
-        assertEquals("P0", actual);
+        assertEquals("P1", actual);
     }
 
     @Test
-    public void returnP0IfPlaceNotCreated() {
+    public void returnP1IfPlaceNotCreated() {
         String first = placeNamer.getName();
-        assertEquals("P0", first);
+        assertEquals("P1", first);
         String second = placeNamer.getName();
-        assertEquals("P0", second);
+        assertEquals("P1", second);
     }
 
     @Test
-    public void returnP0IfPlacesDontConflict() {
-        Place place = new DiscretePlace("P1", "P1");
+    public void returnP1IfPlacesDontConflict() {
+        Place place = new DiscretePlace("P2", "P2");
         petriNet.addPlace(place);
         String actual = placeNamer.getName();
-        assertEquals("P0", actual);
+        assertEquals("P1", actual);
     }
 
     @Test
     public void returnNextValueIfTwoPlacesExist() {
         addNConsecutivePlaces(2);
         String actual = placeNamer.getName();
-        assertEquals("P2", actual);
+        assertEquals("P3", actual);
     }
 
 
@@ -54,32 +54,32 @@ public class PlaceNamerTest {
     public void returnNextValueIfFourPlacesExist() {
         addNConsecutivePlaces(4);
         String actual = placeNamer.getName();
-        assertEquals("P4", actual);
+        assertEquals("P5", actual);
     }
 
     @Test
     public void returnMiddleValue() {
-        Place place = new DiscretePlace("P0", "P0");
-        Place place2 = new DiscretePlace("P2", "P2");
+        Place place = new DiscretePlace("P1", "P1");
+        Place place2 = new DiscretePlace("P3", "P3");
         petriNet.addPlace(place);
         petriNet.addPlace(place2);
 
         String actual = placeNamer.getName();
-        assertEquals("P1", actual);
+        assertEquals("P2", actual);
     }
 
 
     @Test
     public void reUseDeletedValue() throws PetriNetComponentException {
-        Place place = new DiscretePlace("P0", "P0");
+        Place place = new DiscretePlace("P1", "P1");
         petriNet.addPlace(place);
 
         String actual = placeNamer.getName();
-        assertEquals("P1", actual);
+        assertEquals("P2", actual);
         petriNet.removePlace(place);
 
         String actual2 = placeNamer.getName();
-        assertEquals("P0", actual2);
+        assertEquals("P1", actual2);
     }
 
 
@@ -90,19 +90,19 @@ public class PlaceNamerTest {
      */
     @Test
     public void returnCorrectValueAfterConstructor() {
-        Place place = new DiscretePlace("P0", "P0");
+        Place place = new DiscretePlace("P1", "P1");
         petriNet.addPlace(place);
         petriNet.addPlace(place);
 
         PlaceNamer newNamer = new PlaceNamer(petriNet);
 
         String actual = newNamer.getName();
-        assertEquals("P1", actual);
+        assertEquals("P2", actual);
     }
 
 
     private void addNConsecutivePlaces(int n) {
-        for (int i = 0; i < n; i++) {
+        for (int i = 1; i <= n; i++) {
             String id = "P" + i;
             Place place = new DiscretePlace(id, id);
             petriNet.addPlace(place);
@@ -111,7 +111,7 @@ public class PlaceNamerTest {
 
     @Test
     public void identifiesNonUniqueName() {
-        String name = "Place 0";
+        String name = "Place 1";
         Place place = new DiscretePlace(name, name);
         petriNet.addPlace(place);
         PlaceNamer newNamer = new PlaceNamer(petriNet);
@@ -122,7 +122,7 @@ public class PlaceNamerTest {
 
     @Test
     public void identifiesUniqueName() {
-        String name = "Place 0";
+        String name = "Place 1";
         Place place = new DiscretePlace(name, name);
         petriNet.addPlace(place);
         PlaceNamer newNamer = new PlaceNamer(petriNet);
@@ -131,12 +131,12 @@ public class PlaceNamerTest {
     }
 
     @Test
-    public void observesTransitionNameChanges() {
-        String originalId = "Place 0";
+    public void observesPlaceNameChanges() {
+        String originalId = "Place 1";
         Place place = new DiscretePlace(originalId, originalId);
         petriNet.addPlace(place);
         UniqueNamer newNamer = new PlaceNamer(petriNet);
-        String newId = "Place 1";
+        String newId = "Place 2";
         place.setId(newId);
         assertFalse(newNamer.isUniqueName(newId));
         assertTrue(newNamer.isUniqueName(originalId));
